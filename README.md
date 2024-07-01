@@ -7,7 +7,7 @@ This script automates the creation of users and groups based on the contents of 
 ## Requirements
 
 - The script must be run as root.
-- A text file with the format: `username;group1,group2,...` for each line.
+- A text file with the format: `username; group1,group2,...` for each line.
 
 ## Usage
 
