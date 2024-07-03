@@ -57,43 +57,66 @@ logger() {
 
 # Function to create a user
 create_user() {
+    # Local variable to store the username provided as the first argument
     local username=$1
+    # Generate a random password using openssl and store it in the 'password' variable
     local password=$(openssl rand -base64 12)
 
+    # Check if the user already exists by trying to get the user ID
+    # 'id -u' returns the user ID if the user exists, otherwise it exits with a non-zero status
     if id -u "$username" >/dev/null 2>&1; then
+        # If the user exists, log a message indicating the user exists and skip creation
         logger "User $username already exists, skipping creation."
         return 1
     fi
 
+    # Create a new user with a home directory using the useradd command
     useradd -m "$username"
+    # Check if the useradd command was successful (exit status 0 means success)
     if [[ $? -ne 0 ]]; then
+        # If useradd failed, log an error message and return with a non-zero status
         logger "Failed to add user $username"
         return 1
     fi
 
+    # Set the user's password using the chpasswd command
+    # The command expects input in the format 'username:password'
     echo "$username:$password" | chpasswd
+    # Check if the chpasswd command was successful
     if [[ $? -ne 0 ]]; then
+        # If setting the password failed, log an error message and return with a non-zero status
         logger "Failed to set password for user $username"
         return 1
     fi
 
+    # Append the username and password to a file specified by the PASSWORD_FILE variable
+    # This stores the user's credentials for reference
     echo "$username,$password" >>$PASSWORD_FILE
+    # Log a message indicating the user was created successfully and the password was stored
     logger "User $username created successfully with password stored."
     return 0
 }
 
 # Function to create a group if it doesn't exist
 create_group() {
+    # Local variable to store the group name provided as the first argument
     local group=$1
 
+    # Check if the group already exists using the getent command
+    # 'getent group' returns the group entry if the group exists, otherwise it exits with a non-zero status
     if ! getent group "$group" >/dev/null; then
+        # If the group does not exist, create the group using the groupadd command
         groupadd "$group"
+        # Check if the groupadd command was successful (exit status 0 means success)
         if [[ $? -ne 0 ]]; then
+            # If groupadd failed, log an error message and return with a non-zero status
             logger "Failed to create group $group"
             return 1
         fi
+        # Log a message indicating the group was created successfully
         logger "Group $group created."
     else
+        # If the group already exists, log a message indicating it and skip creation
         logger "Group $group already exists, skipping creation."
     fi
     return 0
